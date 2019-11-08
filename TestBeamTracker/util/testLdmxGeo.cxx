@@ -1,10 +1,10 @@
-#include "TestBeamTracker/Geometry.hpp"
+#include "TestBeamTracker/LdmxTracker.h"
 #include "TestBeamTracker/common_includes.hpp"
 #include "Acts/Surfaces/Surface.hpp"
 
 #include <cstdlib>
 
-using namespace TestBeamTracker;
+
 
 //------------------------------------------------------------------------------
 
@@ -47,43 +47,41 @@ void surfaceVisitor(const Acts::Surface * surf) {
 //------------------------------------------------------------------------------
 
 int main(int argc, char ** argv) {
+    
+    
 
+    bool debug = false;
+    float scaling_factor = 1.;
+    if (argc > 1) 
+        debug = (bool)std::stoi(argv[1]);
+    if (argc > 2)
+        scaling_factor = std::stof(argv[2]);
     
-    string input = "";
-    long   nEntries = 10;
     
-    int iOpt = 1;
-    while (iOpt < argc) {
-        string sw = argv[iOpt];
-        if      (sw=="-h" || sw=="--help"      ) { usage(argv[0]); return 0; }
-        else if (sw=="-i" || sw=="--input"     ) { input = argv[++iOpt]; }
-        else if (sw=="-n" || sw=="--nEntries"  ) { nEntries = stoi(argv[++iOpt]); }
-        else {
-            cout << "Unknown switch: " << sw << "\n";
-            usage(argv[0]);
-            return 1;
-        }
-        ++iOpt;
+    LdmxTracker tracker("/nfs/slac/g/hps2/pbutti/LDMX/sw/TestBeamTracker/run/taggerLdmx_test.gdml");
+    
+    //Overwrite wrong parsing effects. Layers every 100 mm, separated by 3mm
+    double z_layers[14] = {100,103,200,203,300,303,400,403,500,503,600,603,700,703};
+    double x_layers[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    double y_layers[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    
+    //for (int i=0; i<14; i++) {
+    //  tracker.SetPlaneGlobalZPosition(i,scaling_factor*z_layers[i]);
+    //}
+
+    for (int i=0; i<14; i++) {
+        Acts::Vector3D pos{z_layers[i],x_layers[i],y_layers[i]};
+        tracker.SetPlaneGlobalPosition(i,pos);
     }
-    cout << "Flags:\n"
-         << "------\n"
-         << "  nEntries   = " << nEntries   << '\n'
-         << "  input      = " << input      << '\n'
-         << '\n';
     
+    tracker.SetVolumeDimension(100,100,scaling_factor*1000);
     
-  //Geometry geo;
-  cout << "INFO  Surfaces populated:\n";
-  //for (const auto & it : geo.surfaces()) {
-  //  cout << "        " << it.first << " => ";
-  //if (!it.second) {
-  //  cout << "null!\n";
-  //} else {
-        //Acts::Vector3D center = it.second->center();
-        //Acts::Vector3D normal = it.second->normal();
-        //cout << "center = (" <<center.x() << ',' << center.y() << ',' << center.z() << ")\n";
-        //cout << "            normal = " << "(" << normal.x() << ',' << normal.y() << ',' << normal.z() << ")\n";
-  //}
-  //}
+    tracker.BuildSurfaceConfigurations();
+    tracker.BuildLayerConfigurations();
+    tracker.BuildSubVolumesConfigurations();
+    tracker.BuildTopVolumeGeometry();
+    tracker.BuildTrackingGeometry();
+    if (debug)
+        tracker.PrintOutGeometrySimple();
   
 }

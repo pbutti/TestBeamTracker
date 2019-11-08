@@ -4,7 +4,7 @@
 #include "TestBeamTracker/EventReader.hpp"
 
 #include "Acts/Utilities/Definitions.hpp"
-#include "Acts/Detector/TrackingGeometry.hpp"
+#include "Acts/Geometry/TrackingGeometry.hpp"
 #include "Acts/EventData/Measurement.hpp"
 #include "Acts/EventData/TrackParameters.hpp"
 #include "Acts/EventData/TrackState.hpp"

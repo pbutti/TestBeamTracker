@@ -3,8 +3,10 @@
 #include "TestBeamTracker/EventReader.hpp"
 #include "Acts/Utilities/Definitions.hpp"
 #include "Acts/Utilities/Units.hpp"
-#include "Acts/Detector/TrackingGeometry.hpp"
+#include "Acts/Geometry/TrackingGeometry.hpp"
+#include "Acts/Geometry/TrackingGeometryBuilder.hpp"
 #include "Acts/Surfaces/Surface.hpp"
+#include "Acts/Geometry/GeometryContext.hpp"
 #include <memory>
 #include <vector>
 #include <map>
@@ -17,7 +19,9 @@ namespace TestBeamTracker {
   /// 
   /// Struct for holding test beam telescope geometry configuration.
   /// 
-  struct Geometry {
+  class Geometry {
+
+public:
     Acts::Vector3D  trackerDimensions = {
       //20.0 * Acts::units::_mm, 16.8 * Acts::units::_mm, 1000.0 * Acts::units::_mm
       2000.0*Acts::units::_mm, 30.0*Acts::units::_mm, 30.0*Acts::units::_mm
@@ -59,6 +63,11 @@ namespace TestBeamTracker {
     /// 
     std::shared_ptr<const Acts::TrackingGeometry> detector;
 
+    /// Dummy geometry context
+    Acts::GeometryContext* dummy_context;    
+
+
+
     /// 
     /// Default constructor. Populates `detector` with default ACTS cuboid tracking
     /// volume and detector planes as specified by `nPlanes`, `planePos`, `planeDirU`,
@@ -73,12 +82,12 @@ namespace TestBeamTracker {
     Acts::Vector2D localPos(int pixelColumn, int pixelRow);
     std::map<uint, std::shared_ptr<const Acts::Surface>> surfaces();
 
-  private:
+
     // These utility methods must be static to be callable by
     // `Acts::TrackingGeometry::visitSurfaces`.
     static std::map<uint, std::shared_ptr<const Acts::Surface>> _surfMap;
-    static uint planeNumber(const Acts::Surface & surf);
-    static void surfaceVisitor(const Acts::Surface * surf);
+//static uint planeNumber(const Acts::Surface & surf);
+//  static void surfaceVisitor(const Acts::Surface * surf);
   };
 
 }
