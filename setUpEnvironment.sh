@@ -25,6 +25,10 @@ export LD_LIBRARY_PATH="${TESTBEAMTRACKER_DIR}/install/lib64:$LD_LIBRARY_PATH"
 #export LD_LIBRARY_PATH="$ROOTSYS/lib:$LD_LIBRARY_PATH:$ROOTSYS"
 #export PATH="$ROOTSYS/bin:$PATH"
 
+#ROOT 
+sroot 
+# ACTS
+source /nfs/slac/g/hps2/pbutti/LDMX/sw/acts-core/install/bin/setup.sh
 
 # End of location-specific settings
 ################################################################################

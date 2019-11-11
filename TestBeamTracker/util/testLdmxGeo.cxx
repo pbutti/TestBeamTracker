@@ -70,8 +70,9 @@ int main(int argc, char ** argv) {
     //}
 
     for (int i=0; i<14; i++) {
-        Acts::Vector3D pos{z_layers[i],x_layers[i],y_layers[i]};
-        tracker.SetPlaneGlobalPosition(i,pos);
+        //Acts::Vector3D pos{z_layers[i],x_layers[i],y_layers[i]};
+        //tracker.SetPlaneGlobalPosition(i,pos);
+        tracker.SetPlaneGlobalPosition(i,0,z_layers[i]);
     }
     
     tracker.SetVolumeDimension(100,100,scaling_factor*1000);

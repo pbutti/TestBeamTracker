@@ -71,8 +71,13 @@ public:
     //Override functions
     
     //Change planes location
-    void SetPlaneGlobalZPosition(int iplane, double z);
+    void SetPlaneGlobalPosition(int iplane, int icoord, double x);
     void SetPlaneGlobalPosition(int iplane, const Acts::Vector3D& pos);
+
+
+    //Possible to set an additional transformation to move/rotate the global geometry (i.e. for axes rotation)
+    //TODO Use transform instead of rot+vec separately
+    void SetAdditionalGlobalTransform(const Acts::RotationMatrix3D& glob_rot, const Acts::Vector3D& glob_trans){};
     
     //TODO FIX FIX FIX
     void SetVolumeDimension(double dx, double dy, double dz) {

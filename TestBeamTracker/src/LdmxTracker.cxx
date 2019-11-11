@@ -124,41 +124,39 @@ bool LdmxTracker::FillGlobalToLocalTrans(const TGeoMatrix* geoMatrix,
         return false;
     
     
-    
+    //LDMX geometry rotation matrix
     //The rot matrix from geoMatrix has 9 elements: 0-8
-    // 0 1 2        0,0  0,1  0,2
-    // 3 4 5   =>   1,0  1,1  1,2
-    // 6 7 8        2,0  2,1  2,2
+    // 0 1 2        |0,0  0,1  0,2|
+    // 3 4 5   =>   |1,0  1,1  1,2|
+    // 6 7 8        |2,0  2,1  2,2|
     for (int i=0; i<9; i++) {
         rot_matrix(i / 3, i % 3) = geoMatrix->GetRotationMatrix()[i];
     }
     
-    //TODO FIX!!
+    //TODO FIX THIS!
+    //for (int i=0; i<3; i++) { 
+    //I should use the conversion to mm s. TODO CHECK THIS
+    //trans_vec(i) = geoMatrix->GetTranslation()[i] * TGeoUnits::mm;
+    //}
+
+    //Rotate the axes to (zyx)
+    //TODO FIX!! - This is due to an hardcode in ACTS
+    
+    Acts::RotationMatrix3D AxesRotation; 
     double rotationAngle = M_PI * 0.5;
     Acts::Vector3D xPos(cos(rotationAngle), 0., sin(rotationAngle));
     Acts::Vector3D yPos(0., 1., 0.);
     Acts::Vector3D zPos(-sin(rotationAngle), 0., cos(rotationAngle));
 
-    rot_matrix.col(0) = xPos;
-    rot_matrix.col(1) = yPos;
-    rot_matrix.col(2) = zPos;
     
-    //Build translation vector (x,y,z)
-    //TODO CHECK!
-    //Flipping the axes to (z,x,y) ?
-    //int axes[3] = {2,0,1};
-    int axes[3]  = {0,1,2};
-    //for (int i=0; i<3; i++) { 
-    //I should use the conversion to mm s. TODO CHECK THIS
-    //trans_vec(i) = geoMatrix->GetTranslation()[i] * TGeoUnits::mm;
-    //trans_vec(i) = geoMatrix->GetTranslation()[axes[i]];
-    //}
-
-    trans_vec(0) = geoMatrix->GetTranslation()[2];
-    trans_vec(1) = 0.;
-    trans_vec(2) = 0.;
+    AxesRotation.col(0) = xPos;
+    AxesRotation.col(1) = yPos;
+    AxesRotation.col(2) = zPos;
+    
+    Acts::Vector3D originalPos = {geoMatrix->GetTranslation()[0],geoMatrix->GetTranslation()[1],geoMatrix->GetTranslation()[2]};
+    trans_vec   = AxesRotation * originalPos;
+    rot_matrix = AxesRotation.transpose()*(rot_matrix*AxesRotation);
         
-    
     if (_debug) {
         std::cout<<"Transform Global to Local"<<std::endl;
         std::cout<<rot_matrix<<std::endl;
@@ -169,13 +167,17 @@ bool LdmxTracker::FillGlobalToLocalTrans(const TGeoMatrix* geoMatrix,
 }
 
 
-void LdmxTracker::SetPlaneGlobalZPosition(int iplane, double z) {
+void LdmxTracker::SetPlaneGlobalPosition(int iplane, int icoord, double val) {
     if (iplane > planePos.size()-1) {
         std::cerr<<"LdmxTracker::SetPlaneGlobalPosition::ERROR plane="<<iplane<<" not available. NPlanes "<<planePos.size()<<std::endl; 
         return;
     }
     
-    planePos[iplane](2) = z;
+    if (icoord <0 || icoord > 2) {
+        std::cerr<<"LdmxTracker::Coordinate must be between 0 and 2"<<std::endl;
+    }
+    
+    planePos[iplane](icoord) = val;
     
 }
 
@@ -220,8 +222,8 @@ bool LdmxTracker::BuildSurfaceConfigurations () {
         surf_cfg.surMat = std::shared_ptr<Acts::ISurfaceMaterial>(new Acts::HomogeneousSurfaceMaterial(*matProp));
         
         //TODO FIX THIS!
-        //surf_cfg.thickness = _thickness;
-        surf_cfg.thickness = 0.;
+        surf_cfg.thickness = _thickness;
+        //surf_cfg.thickness = 0.;
 
         //Create a detector element stub => update?
         //Trans/bounds/thickness are then taken from the surface configuration =)
@@ -350,3 +352,5 @@ void LdmxTracker::PrintOutGeometrySimple() {
         }   
     }   
 }
+
+
