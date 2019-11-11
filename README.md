@@ -1,3 +1,8 @@
+-------------------------------------------------------------------------
+----------- THIS README COMES FROM THE OLD FORK. DEPRECATED -------------
+------------------------------------------------------------------------
+
+
 # TestBeamTracker
 
 Tracking package for test beam telescope geometry.
