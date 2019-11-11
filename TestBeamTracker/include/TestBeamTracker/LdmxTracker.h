@@ -110,6 +110,8 @@ public:
     //Get tracker surfaces
     std::map<uint, std::shared_ptr<const Acts::Surface>> surfaces();
 
+    //Get tracking geometry
+    std::shared_ptr<const Acts::TrackingGeometry> GetDetector() {return tracker_detector;};
 
 private:
 

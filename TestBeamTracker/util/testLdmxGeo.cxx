@@ -49,15 +49,11 @@ void surfaceVisitor(const Acts::Surface * surf) {
 int main(int argc, char ** argv) {
     
     
-
+    
     bool debug = false;
-    float scaling_factor = 1.;
     if (argc > 1) 
         debug = (bool)std::stoi(argv[1]);
-    if (argc > 2)
-        scaling_factor = std::stof(argv[2]);
-    
-    
+        
     LdmxTracker tracker("/nfs/slac/g/hps2/pbutti/LDMX/sw/TestBeamTracker/run/taggerLdmx_test.gdml");
     
     //Overwrite wrong parsing effects. Layers every 100 mm, separated by 3mm
@@ -65,17 +61,13 @@ int main(int argc, char ** argv) {
     double x_layers[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     double y_layers[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     
-    //for (int i=0; i<14; i++) {
-    //  tracker.SetPlaneGlobalZPosition(i,scaling_factor*z_layers[i]);
-    //}
-
     for (int i=0; i<14; i++) {
         //Acts::Vector3D pos{z_layers[i],x_layers[i],y_layers[i]};
         //tracker.SetPlaneGlobalPosition(i,pos);
         tracker.SetPlaneGlobalPosition(i,0,z_layers[i]);
     }
     
-    tracker.SetVolumeDimension(100,100,scaling_factor*1000);
+    tracker.SetVolumeDimension(100,100,1000);
     
     tracker.BuildSurfaceConfigurations();
     tracker.BuildLayerConfigurations();
@@ -84,5 +76,4 @@ int main(int argc, char ** argv) {
     tracker.BuildTrackingGeometry();
     if (debug)
         tracker.PrintOutGeometrySimple();
-  
 }

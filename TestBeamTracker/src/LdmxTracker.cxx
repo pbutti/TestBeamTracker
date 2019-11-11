@@ -155,7 +155,9 @@ bool LdmxTracker::FillGlobalToLocalTrans(const TGeoMatrix* geoMatrix,
     
     Acts::Vector3D originalPos = {geoMatrix->GetTranslation()[0],geoMatrix->GetTranslation()[1],geoMatrix->GetTranslation()[2]};
     trans_vec   = AxesRotation * originalPos;
-    rot_matrix = AxesRotation.transpose()*(rot_matrix*AxesRotation);
+    
+    //Axial - stereo. First rotate in the X-Y plane, then the Axes. 
+    rot_matrix = AxesRotation * rot_matrix;
         
     if (_debug) {
         std::cout<<"Transform Global to Local"<<std::endl;
