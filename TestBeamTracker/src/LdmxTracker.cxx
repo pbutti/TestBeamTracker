@@ -8,7 +8,7 @@
 #include "Acts/Utilities/Definitions.hpp"
 #include "Acts/Utilities/Units.hpp"
 
-#include "Acts/Tests/CommonHelpers/DetectorElementStub.hpp"
+
 
 
 LdmxTracker::LdmxTracker(const std::string& gdmlFile) { 
@@ -142,7 +142,7 @@ bool LdmxTracker::FillGlobalToLocalTrans(const TGeoMatrix* geoMatrix,
     //Rotate the axes to (zyx)
     //TODO FIX!! - This is due to an hardcode in ACTS
     
-    Acts::RotationMatrix3D AxesRotation; 
+    
     double rotationAngle = M_PI * 0.5;
     Acts::Vector3D xPos(cos(rotationAngle), 0., sin(rotationAngle));
     Acts::Vector3D yPos(0., 1., 0.);
@@ -153,9 +153,9 @@ bool LdmxTracker::FillGlobalToLocalTrans(const TGeoMatrix* geoMatrix,
     AxesRotation.col(1) = yPos;
     AxesRotation.col(2) = zPos;
     
-    Acts::Vector3D originalPos = {geoMatrix->GetTranslation()[0],geoMatrix->GetTranslation()[1],geoMatrix->GetTranslation()[2]};
+    //TODO FIX => Why do I have to use cm here?
+    Acts::Vector3D originalPos = {geoMatrix->GetTranslation()[0]*TGeoUnits::cm,geoMatrix->GetTranslation()[1]*TGeoUnits::cm,geoMatrix->GetTranslation()[2]*TGeoUnits::cm};
     trans_vec   = AxesRotation * originalPos;
-    
     //Axial - stereo. First rotate in the X-Y plane, then the Axes. 
     rot_matrix = AxesRotation * rot_matrix;
         
@@ -191,6 +191,72 @@ void LdmxTracker::SetPlaneGlobalPosition(int iplane, const Acts::Vector3D& pos) 
     planePos[iplane] = pos;
 }
 
+
+
+//Alternative functions to build the geometry directly, without the need to pass from CuboidVolumeBuilder
+bool LdmxTracker::BuildSurfaces() {
+
+    if (planePos.size() == 0) 
+        return false;
+    
+    //Plane Pos are the translations
+    for (unsigned int i; i<planePos.size(); i++) {
+        Acts::Transform3D trafo(global_to_local_rot[i]*AxesRotation);
+        trafo.translation() = planePos[i];
+        //Create the detector element
+               
+        //Make the boundaries
+        std::shared_ptr<const Acts::RectangleBounds> rBounds = std::make_shared<const Acts::RectangleBounds>(planeBoundaries[i](0),planeBoundaries[i](1));
+
+        //Not sure should be here or global
+        //Make the material
+        std::shared_ptr<Acts::MaterialProperties> SimatProp = getMaterial("Si",_thickness);
+       
+        //POSSIBLE BUG::Not sure I should create this pointer here or should be global
+        std::shared_ptr<const Acts::ISurfaceMaterial> surfaceMaterial = std::shared_ptr<const Acts::ISurfaceMaterial> ( new Acts::HomogeneousSurfaceMaterial(*SimatProp));
+        
+        // Create the detector element - Thickness..
+        auto detElement = std::make_unique<const Acts::Test::DetectorElementStub>(
+            std::make_shared<const Acts::Transform3D>(trafo), rBounds, _thickness,
+            surfaceMaterial);
+        //Remember the surfaces
+        surfaces.push_back(detElement->surface().getSharedPtr());
+        
+        //add the detElements to the detectorStore
+        detectorStore.push_back(std::move(detElement));
+    }
+    
+    return true;
+}
+
+bool LdmxTracker::BuildLayers() {
+    
+    if (planePos.size()==0)
+        return false;
+    
+    for (unsigned int i = 0; i< planePos.size();++i ) {
+        
+        //TODO change these names!
+        Acts::Transform3D trafo(global_to_local_rot[i]*AxesRotation);
+        trafo.translation() = planePos[i];
+        
+        //Re-make the boundaries (layer boundaries can be different from surface boundaries)
+        std::shared_ptr<const Acts::RectangleBounds> rBounds = std::make_shared<const Acts::RectangleBounds>(planeBoundaries[i](0),planeBoundaries[i](1));
+        
+        
+        std::unique_ptr<Acts::SurfaceArray> surArray(new Acts::SurfaceArray(surfaces[i]));
+        layers[i] = Acts::PlaneLayer::create(std::make_shared<const Acts::Transform3D>(trafo),
+                                             rBounds, std::move(surArray),_thickness);
+        
+        auto mutableSurface = const_cast<Acts::Surface*>(surfaces[i].get());
+        mutableSurface->associateLayer(*layers[i]);
+    }
+    return true;
+
+}
+
+
+
 //A surface configuration needs:
 //1) center position
 //2) rotation
@@ -215,7 +281,6 @@ bool LdmxTracker::BuildSurfaceConfigurations () {
         surf_cfg.rotation = global_to_local_rot[i_plane];
         
         
-        //bounds - check is this correct?  - TODO REMOVE HARDCODING!
         surf_cfg.rBounds  = std::make_shared<const Acts::RectangleBounds>(planeBoundaries[i_plane](0),planeBoundaries[i_plane](1));
         
         

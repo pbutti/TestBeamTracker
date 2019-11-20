@@ -17,6 +17,13 @@
 #include "Acts/Geometry/GeometryContext.hpp"
 #include "Acts/Geometry/CuboidVolumeBuilder.hpp"
 #include "Acts/Material/MaterialProperties.hpp"
+//Layers
+#include "Acts/Geometry/LayerArrayCreator.hpp"
+#include "Acts/Geometry/PlaneLayer.hpp"
+
+//Detector elements
+#include "Acts/Tests/CommonHelpers/DetectorElementStub.hpp"
+
 
 #include <memory>
 #include <vector>
@@ -89,8 +96,14 @@ public:
     //Build the surface configs
     bool BuildSurfaceConfigurations ();
 
+    //Build the surfaces directly
+    bool BuildSurfaces();
+
     //Build the layers configs
     bool BuildLayerConfigurations ();
+
+    //Build the layers directly
+    bool BuildLayers();
 
     //Build the volume configs
     bool BuildSubVolumesConfigurations();
@@ -107,9 +120,7 @@ public:
     //Material Properties for typical materials - TODO fill for other materials
     std::shared_ptr<Acts::MaterialProperties> getMaterial(const std::string& material,double thickness);
     
-    //Get tracker surfaces
-    std::map<uint, std::shared_ptr<const Acts::Surface>> surfaces();
-
+    
     //Get tracking geometry
     std::shared_ptr<const Acts::TrackingGeometry> GetDetector() {return tracker_detector;};
 
@@ -133,6 +144,8 @@ private:
     std::vector<Acts::Vector3D> global_to_local_t;
     std::vector<Acts::RotationMatrix3D > global_to_local_rot;
     
+    //Axes rotation
+    Acts::RotationMatrix3D AxesRotation; 
     //Shared didn't work
     //std::shared_ptr<TGeoManager> _geoManager;
     
@@ -167,4 +180,13 @@ private:
     /// Instance of ACTS tracking geometry (used when employing ACTS machinery).
     /// 
     std::shared_ptr<const Acts::TrackingGeometry> tracker_detector;
+    
+    
+    std::vector<std::unique_ptr<const Acts::Test::DetectorElementStub>> detectorStore{};
+    
+    //Actual storage of the elements of the geometry for building directly
+    std::vector<std::shared_ptr<const Acts::Surface> > surfaces;
+    std::vector<Acts::LayerPtr> layers;
+
+
 };
